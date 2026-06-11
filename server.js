@@ -9,6 +9,11 @@ import { google } from 'googleapis'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const port = Number(process.env.PORT || 3000)
+const frontendUrl = process.env.FRONTEND_URL || ''
+const corsOrigins = (process.env.CORS_ORIGIN || frontendUrl || '*')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean)
 const db = new DatabaseSync(path.join(__dirname, 'hearth.db'))
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -57,6 +62,23 @@ function sendJson(res, status, data) {
     'Content-Length': Buffer.byteLength(body)
   })
   res.end(body)
+}
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin
+  if (!origin) return
+  const allowAny = corsOrigins.includes('*')
+  const allowed = allowAny || corsOrigins.includes(origin)
+  if (!allowed) return
+  res.setHeader('Access-Control-Allow-Origin', allowAny ? '*' : origin)
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Vary', 'Origin')
+}
+
+function getFrontendRedirect() {
+  if (!frontendUrl) return '/?google=connected'
+  return `${frontendUrl.replace(/\/$/, '')}/?google=connected`
 }
 
 function readBody(req) {
@@ -199,7 +221,7 @@ async function handleApi(req, res, url) {
     }
     const { tokens } = await client.getToken(code)
     db.prepare('INSERT INTO google_tokens (id, value, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP').run(JSON.stringify(tokens))
-    res.writeHead(302, { Location: '/?google=connected' })
+    res.writeHead(302, { Location: getFrontendRedirect() })
     res.end()
     return true
   }
@@ -286,6 +308,12 @@ function serveStatic(req, res, url) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    setCorsHeaders(req, res)
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204)
+      res.end()
+      return
+    }
     const url = new URL(req.url, `http://${req.headers.host}`)
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
       const handled = await handleApi(req, res, url)

@@ -136,6 +136,7 @@ body.orientation-landscape .content {
 }
 
 .side-nav {
+  position: relative;
   order: 2;
   background: rgba(255, 255, 255, 0.92);
   border-top: 1px solid var(--line);
@@ -146,6 +147,8 @@ body.orientation-landscape .content {
   align-items: center;
   gap: 8px;
   backdrop-filter: blur(16px);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .brand {
@@ -178,7 +181,13 @@ body.orientation-landscape .content {
   display: flex;
   gap: 4px;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 
 .tabs::-webkit-scrollbar {
@@ -219,6 +228,8 @@ body.orientation-landscape .content {
   place-items: center;
   font-size: 0.69rem;
   font-weight: 800;
+  scroll-snap-align: center;
+  user-select: none;
 }
 
 .tab-btn.active,
@@ -803,6 +814,29 @@ body:not(.orientation-landscape) .metric-row {
   font: inherit;
 }
 
+.file-picker {
+  position: relative;
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px dashed var(--line);
+  background: var(--panel-strong);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.file-picker input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .event-form textarea {
   min-height: 150px;
   resize: vertical;
@@ -821,6 +855,13 @@ body:not(.orientation-landscape) .metric-row {
   align-items: center;
   gap: 8px;
   color: var(--muted);
+  width: max-content;
+  max-width: 100%;
+}
+
+.inline-check input {
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .event-list {
@@ -1256,6 +1297,17 @@ body.dimmed .display {
 
   .side-nav {
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .side-nav::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 42px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.96));
   }
 
   .content {
@@ -1398,10 +1450,13 @@ body.dimmed .display {
 
   .tabs {
     gap: 2px;
+    padding: 0 42px 0 0;
+    min-width: 0;
+    cursor: grab;
   }
 
   .tab-btn {
-    flex-basis: 64px;
+    flex: 0 0 72px;
     min-height: 54px;
     font-size: 0.64rem;
   }

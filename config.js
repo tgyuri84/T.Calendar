@@ -1,0 +1,1 @@
+window.HEARTH_BACKEND_URL = ''

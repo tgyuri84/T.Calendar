@@ -51,6 +51,17 @@ const storage = {
   rewards: 'hearth-display-rewards'
 }
 
+const configuredBackendUrl = typeof window !== 'undefined' ? (window.HEARTH_BACKEND_URL || '').trim() : ''
+const defaultSettings = {
+  familyName: 'Otthoni család',
+  frame: 'wood',
+  theme: 'warm',
+  bedtimeDim: false,
+  wallpaper: '',
+  orientation: 'portrait',
+  backendUrl: configuredBackendUrl
+}
+
 const el = id => document.getElementById(id)
 const nodes = {
   familyNameLabel: el('familyNameLabel'),
@@ -118,6 +129,7 @@ const nodes = {
   profileList: el('profileList'),
   settingsForm: el('settingsForm'),
   familyNameInput: el('familyNameInput'),
+  backendUrlInput: el('backendUrlInput'),
   frameSelect: el('frameSelect'),
   themeSelect: el('themeSelect'),
   bedtimeDim: el('bedtimeDim'),
@@ -172,7 +184,7 @@ let lists = readLocal(storage.lists, [{ id: crypto.randomUUID(), name: 'Bevásá
 let feelings = readLocal(storage.feelings, [])
 let weatherState = readLocal(storage.weather, { zip: 'Budapest', days: [] })
 let privacyMode = readLocal(storage.privacy, false)
-let settings = readLocal(storage.settings, { familyName: 'Otthoni család', frame: 'wood', theme: 'warm', bedtimeDim: false, wallpaper: '', orientation: 'portrait' })
+let settings = { ...defaultSettings, ...readLocal(storage.settings, defaultSettings) }
 let helperQueue = readLocal(storage.helper, [])
 let rewards = readLocal(storage.rewards, [])
 
@@ -188,6 +200,22 @@ function readLocal(key, fallback) {
 
 function saveLocal(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
+}
+
+function normalizeBackendUrl(value) {
+  const raw = (value || '').trim()
+  if (!raw) return ''
+  try {
+    const url = new URL(raw)
+    return url.origin + url.pathname.replace(/\/$/, '')
+  } catch {
+    return ''
+  }
+}
+
+function apiUrl(path) {
+  const base = normalizeBackendUrl(settings.backendUrl || configuredBackendUrl)
+  return base ? `${base}${path}` : path
 }
 
 function getStateSnapshot() {
@@ -209,12 +237,14 @@ function getStateSnapshot() {
 
 async function syncToBackend() {
   try {
-    await fetch('/api/state', {
+    await fetch(apiUrl('/api/state'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: getStateSnapshot() })
     })
-    if (nodes.syncStatus) nodes.syncStatus.textContent = 'Háttértár: mentve SQLite adatbázisba.'
+    if (nodes.syncStatus) nodes.syncStatus.textContent = normalizeBackendUrl(settings.backendUrl || configuredBackendUrl)
+      ? 'Közös háttértár: mentve.'
+      : 'Helyi háttértár: mentve SQLite adatbázisba.'
   } catch {
     if (nodes.syncStatus) nodes.syncStatus.textContent = 'Háttértár: offline/localStorage mód.'
   }
@@ -222,7 +252,7 @@ async function syncToBackend() {
 
 async function loadBackendState() {
   try {
-    const res = await fetch('/api/state')
+    const res = await fetch(apiUrl('/api/state'))
     if (!res.ok) return
     const data = await res.json()
     const state = data.state || {}
@@ -235,10 +265,13 @@ async function loadBackendState() {
     feelings = state[storage.feelings] || feelings
     weatherState = state[storage.weather] || weatherState
     privacyMode = typeof state[storage.privacy] === 'boolean' ? state[storage.privacy] : privacyMode
-    settings = state[storage.settings] || settings
+    settings = { ...settings, ...(state[storage.settings] || {}) }
+    if (!settings.backendUrl && configuredBackendUrl) settings.backendUrl = configuredBackendUrl
     helperQueue = state[storage.helper] || helperQueue
     rewards = state[storage.rewards] || rewards
-    if (nodes.syncStatus) nodes.syncStatus.textContent = 'Háttértár: SQLite betöltve.'
+    if (nodes.syncStatus) nodes.syncStatus.textContent = normalizeBackendUrl(settings.backendUrl || configuredBackendUrl)
+      ? 'Közös háttértár: betöltve.'
+      : 'Helyi háttértár: SQLite betöltve.'
   } catch {
     if (nodes.syncStatus) nodes.syncStatus.textContent = 'Háttértár: offline/localStorage mód.'
   }
@@ -246,7 +279,7 @@ async function loadBackendState() {
 
 async function updateGoogleStatus() {
   try {
-    const res = await fetch('/api/google/status')
+    const res = await fetch(apiUrl('/api/google/status'))
     const data = await res.json()
     if (!nodes.syncStatus) return
     if (!data.configured) nodes.syncStatus.textContent = 'Google Naptár: .env még nincs konfigurálva.'
@@ -277,7 +310,7 @@ async function importGoogleEvents() {
   if (!nodes.syncStatus) return
   nodes.syncStatus.textContent = 'Google Naptár import folyamatban...'
   try {
-    const res = await fetch('/api/google/events')
+    const res = await fetch(apiUrl('/api/google/events'))
     const data = await res.json()
     if (!res.ok) {
       nodes.syncStatus.textContent = data.error || 'Google Naptár import sikertelen.'
@@ -299,7 +332,7 @@ async function importCalendarUrl(url) {
   if (!nodes.syncStatus) return
   nodes.syncStatus.textContent = 'URL naptár import folyamatban...'
   try {
-    const res = await fetch('/api/calendar-url', {
+    const res = await fetch(apiUrl('/api/calendar-url'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, profileId: nodes.eventProfile.value })
@@ -543,7 +576,10 @@ function activateTab(target) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === target))
   document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.dataset.panel === target))
   const btn = document.querySelector(`.tab-btn[data-tab="${target}"]`)
-  if (btn) nodes.screenTitle.textContent = btn.textContent
+  if (btn) {
+    nodes.screenTitle.textContent = btn.textContent
+    btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }
   if (nodes.quickAddMenu) nodes.quickAddMenu.classList.remove('open')
 }
 
@@ -1056,6 +1092,7 @@ function applySettings() {
   document.body.style.setProperty('--privacy-wallpaper', settings.wallpaper ? `url("${settings.wallpaper}")` : 'linear-gradient(135deg, #f8d7bd, #f7efe5 48%, #dbefff)')
   nodes.familyNameLabel.textContent = settings.familyName
   nodes.familyNameInput.value = settings.familyName
+  if (nodes.backendUrlInput) nodes.backendUrlInput.value = settings.backendUrl || configuredBackendUrl || ''
   nodes.frameSelect.value = settings.frame
   nodes.themeSelect.value = settings.theme
   nodes.bedtimeDim.checked = Boolean(settings.bedtimeDim)
@@ -1196,7 +1233,7 @@ function wireEvents() {
   }
   if (nodes.googleConnectBtn) {
     nodes.googleConnectBtn.addEventListener('click', () => {
-      window.location.href = '/auth/google'
+      window.location.href = apiUrl('/auth/google')
     })
   }
   if (nodes.googleImportBtn) nodes.googleImportBtn.addEventListener('click', importGoogleEvents)
@@ -1350,6 +1387,7 @@ function wireEvents() {
       theme: nodes.themeSelect.value,
       bedtimeDim: nodes.bedtimeDim.checked,
       orientation: settings.orientation || 'portrait',
+      backendUrl: normalizeBackendUrl(nodes.backendUrlInput?.value || configuredBackendUrl),
       wallpaper: wallpaper || settings.wallpaper || ''
     }
     persistAll()

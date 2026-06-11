@@ -165,7 +165,10 @@
                   <option value="evening">Este</option>
                 </select>
                 <input id="routineTasks" type="text" placeholder="Lépések (vesszővel)">
-                <input id="routineCover" type="file" accept="image/*">
+                <label class="file-picker">
+                  <span>Rutin kép feltöltése</span>
+                  <input id="routineCover" type="file" accept="image/*">
+                </label>
                 <button type="submit">Rutin mentése</button>
               </form>
             </div>
@@ -309,7 +312,10 @@
               <form id="profileForm" class="event-form">
                 <input id="profileName" type="text" placeholder="Név" required>
                 <input id="profileColor" type="color" value="#ff8a5f">
-                <input id="profileAvatar" type="file" accept="image/*">
+                <label class="file-picker">
+                  <span>Profilkép feltöltése</span>
+                  <input id="profileAvatar" type="file" accept="image/*">
+                </label>
                 <input id="profileAllergy" type="text" placeholder="Allergia / fontos infó">
                 <input id="profileEmergency" type="text" placeholder="Vészhelyzeti kontakt">
                 <button type="submit">Profil hozzáadása</button>
@@ -328,7 +334,11 @@
               <h2>Kijelző beállítások</h2>
               <form id="settingsForm" class="event-form">
                 <input id="familyNameInput" type="text" placeholder="Család neve">
-                <input id="privacyWallpaperInput" type="file" accept="image/*">
+                <input id="backendUrlInput" type="url" placeholder="Közös backend URL, pl. https://naptar-backend.onrender.com">
+                <label class="file-picker">
+                  <span>Privát háttérkép feltöltése</span>
+                  <input id="privacyWallpaperInput" type="file" accept="image/*">
+                </label>
                 <select id="frameSelect">
                   <option value="wood">Világos fa keret</option>
                   <option value="white">Matt fehér keret</option>
@@ -391,6 +401,7 @@
     </li>
   </template>
 
+  <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
