@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth Display Digital Calendar</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="device-shell">
+    <section class="display">
+      <aside class="side-nav">
+        <div class="brand">
+          <span class="brand-mark">H</span>
+          <div>
+            <strong id="familyNameLabel">Otthoni család</strong>
+            <small>Család</small>
+          </div>
+        </div>
+        <nav class="tabs" id="tabs">
+          <button class="tab-btn active" data-tab="dashboard" type="button">Kezdőlap</button>
+          <button class="tab-btn" data-tab="calendar" type="button">Naptár</button>
+          <button class="tab-btn" data-tab="helper" type="button">Segéd</button>
+          <button class="tab-btn" data-tab="todos" type="button">Teendők</button>
+          <button class="tab-btn" data-tab="routines" type="button">Rutinok</button>
+          <button class="tab-btn secondary-tab" data-tab="rewards" type="button">Jutalmak</button>
+          <button class="tab-btn secondary-tab" data-tab="meals" type="button">Menü</button>
+          <button class="tab-btn secondary-tab" data-tab="lists" type="button">Listák</button>
+          <button class="tab-btn secondary-tab" data-tab="feelings" type="button">Érzések</button>
+          <button class="tab-btn secondary-tab" data-tab="weather" type="button">Időjárás</button>
+          <button class="tab-btn secondary-tab" data-tab="profiles" type="button">Profilok</button>
+          <button class="tab-btn secondary-tab" data-tab="settings" type="button">Beállítások</button>
+        </nav>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Otthoni család</p>
+            <h1 id="screenTitle">Mai áttekintés</h1>
+            <p id="todayLabel"></p>
+          </div>
+          <div class="topbar-actions">
+            <div id="weatherPill" class="status-pill">Időjárás</div>
+            <div class="clock" id="clock"></div>
+          </div>
+        </header>
+        <div id="profileRail" class="profile-rail" aria-label="Családtag szűrő"></div>
+
+        <section class="panel active" data-panel="dashboard">
+          <div class="dashboard-grid">
+            <article class="hero-card">
+              <p class="eyebrow">Családi ritmus</p>
+              <h2 id="familySummary">Minden egy helyen</h2>
+              <p class="hero-subtitle">Naptár, rutinok, listák, menü, időjárás és jutalmak egy élő családi kijelzőn.</p>
+              <div class="metric-row">
+                <div><strong id="todayEventCount">0</strong><span>mai esemény</span></div>
+                <div><strong id="openTodoCount">0</strong><span>nyitott teendő</span></div>
+                <div><strong id="starCount">0</strong><span>csillag</span></div>
+              </div>
+            </article>
+            <article class="card timeline-card">
+              <h2>24 órás fókusz</h2>
+              <div id="dayTimeline" class="day-timeline"></div>
+            </article>
+            <article class="card">
+              <h2>Mai események</h2>
+              <ul id="todayEvents" class="event-list compact"></ul>
+            </article>
+            <article class="card">
+              <h2>Következő rutinok</h2>
+              <ul id="todayRoutines" class="event-list compact"></ul>
+            </article>
+            <article class="card">
+              <h2>Mai menü</h2>
+              <ul id="todayMeals" class="event-list compact"></ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="calendar">
+          <div class="layout wide-left">
+            <div class="card calendar-card">
+              <div class="calendar-header">
+                <button id="prevMonth" aria-label="Előző időszak">‹</button>
+                <h2 id="monthTitle"></h2>
+                <button id="nextMonth" aria-label="Következő időszak">›</button>
+              </div>
+              <div class="view-switcher" id="calendarViews">
+                <button class="view-btn active" data-view="day" type="button">Nap</button>
+                <button class="view-btn" data-view="week" type="button">Hét</button>
+                <button class="view-btn" data-view="month" type="button">Hó</button>
+              </div>
+              <div class="toolbar-row">
+                <select id="calendarProfileFilter" aria-label="Naptár profil szűrő"></select>
+                <button id="todayJumpBtn" class="ghost-btn" type="button">Ma</button>
+              </div>
+              <div class="weekday-row" id="weekdayRow"></div>
+              <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+            <aside class="card events-card">
+              <h2>Esemény hozzáadás</h2>
+              <div class="sync-row">
+                <button id="googleConnectBtn" class="ghost-btn" type="button">Google csatlakoztatás</button>
+                <button id="googleImportBtn" class="ghost-btn" type="button">Google import</button>
+              </div>
+              <p id="syncStatus" class="sync-status">Háttértár szinkron indul...</p>
+              <form id="eventForm" class="event-form">
+                <input id="eventTitle" type="text" placeholder="Esemény címe" required>
+                <input id="eventDate" type="date" required>
+                <input id="eventTime" type="time">
+                <select id="eventProfile"></select>
+                <button type="submit">Hozzáadás</button>
+              </form>
+              <form id="calendarUrlForm" class="event-form mini-form">
+                <input id="calendarUrl" type="url" placeholder="iCal / TeamSnap / suli URL">
+                <button type="submit">URL naptár import</button>
+              </form>
+              <h2>Események</h2>
+              <ul id="eventList" class="event-list"></ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="todos">
+          <div class="layout">
+            <div class="card">
+              <h2>Teendő / házimunka</h2>
+              <form id="todoForm" class="event-form">
+                <input id="todoTitle" type="text" placeholder="Feladat" required>
+                <select id="todoProfile"></select>
+                <select id="todoImportance">
+                  <option value="normal">Normál</option>
+                  <option value="important">Fontos</option>
+                  <option value="household">Bárki / háztartás</option>
+                </select>
+                <label class="inline-check"><input id="todoRecurring" type="checkbox"> Ismétlődő</label>
+                <button type="submit">Feladat mentése</button>
+              </form>
+            </div>
+            <div class="card">
+              <div class="section-head">
+                <h2>Feladatok</h2>
+                <select id="todoFilter" aria-label="Feladat szűrő">
+                  <option value="all">Mindenki</option>
+                  <option value="important">Fontos</option>
+                  <option value="household">Bárki</option>
+                </select>
+              </div>
+              <ul id="todoList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="routines">
+          <div class="layout">
+            <div class="card">
+              <h2>Gyerekbarát rutin</h2>
+              <form id="routineForm" class="event-form">
+                <input id="routineName" type="text" placeholder="Rutin neve" required>
+                <select id="routineProfile"></select>
+                <select id="routineTime">
+                  <option value="morning">Reggel</option>
+                  <option value="afternoon">Délután</option>
+                  <option value="evening">Este</option>
+                </select>
+                <input id="routineTasks" type="text" placeholder="Lépések (vesszővel)">
+                <input id="routineCover" type="file" accept="image/*">
+                <button type="submit">Rutin mentése</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Rutinok, sorozatok és jutalmak</h2>
+              <ul id="routineList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="rewards">
+          <div class="layout">
+            <div class="card">
+              <h2>Csillagok és jutalmak</h2>
+              <form id="rewardForm" class="event-form">
+                <input id="rewardName" type="text" placeholder="Jutalom neve" required>
+                <input id="rewardCost" type="number" min="1" value="10" placeholder="Csillag költség">
+                <select id="rewardProfile"></select>
+                <label class="inline-check"><input id="rewardPinned" type="checkbox" checked> Kitűzött cél</label>
+                <button type="submit">Jutalom mentése</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Jutalom célok</h2>
+              <ul id="rewardList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="meals">
+          <div class="layout">
+            <div class="card">
+              <h2>Menütervezés</h2>
+              <form id="mealForm" class="event-form">
+                <input id="mealDay" type="date" required>
+                <input id="mealName" type="text" placeholder="Fogás" required>
+                <select id="mealProfile"></select>
+                <button type="submit">Étel mentése</button>
+              </form>
+              <button id="autoMealBtn" class="ghost-btn full" type="button">Heti menü + bevásárlólista javaslat</button>
+            </div>
+            <div class="card">
+              <h2>Heti menü</h2>
+              <ul id="mealList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="lists">
+          <div class="layout">
+            <div class="card">
+              <h2>Megosztott és újrahasználható listák</h2>
+              <form id="listForm" class="event-form">
+                <input id="listName" type="text" placeholder="Lista neve" required>
+                <label class="inline-check"><input id="listPrivate" type="checkbox"> Privát lista</label>
+                <button type="submit">Lista létrehozás</button>
+              </form>
+              <form id="listItemForm" class="event-form">
+                <select id="listTarget"></select>
+                <input id="listItemText" type="text" placeholder="Elem neve" required>
+                <button type="submit">Elem hozzáadása</button>
+              </form>
+            </div>
+            <div class="card">
+              <div class="section-head">
+                <h2>Listák</h2>
+                <div id="listViews" class="view-switcher compact-switcher">
+                  <button class="view-btn active" data-list-view="board" type="button">Tábla</button>
+                  <button class="view-btn" data-list-view="checklist" type="button">Pipálós</button>
+                </div>
+              </div>
+              <ul id="sharedList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="feelings">
+          <div class="layout">
+            <div class="card">
+              <h2>Mai érzések</h2>
+              <form id="feelingForm" class="event-form">
+                <select id="feelingProfile"></select>
+                <select id="feelingEmoji">
+                  <option value="Boldog">Boldog</option>
+                  <option value="Nyugodt">Nyugodt</option>
+                  <option value="Semleges">Semleges</option>
+                  <option value="Fáradt">Fáradt</option>
+                  <option value="Szomorú">Szomorú</option>
+                  <option value="Dühös">Dühös</option>
+                  <option value="Izgatott">Izgatott</option>
+                  <option value="Aggódó">Aggódó</option>
+                </select>
+                <input id="feelingNote" type="text" placeholder="Rövid megjegyzés">
+                <button type="submit">Mentés</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Érzés riport</h2>
+              <ul id="feelingList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="weather">
+          <div class="layout">
+            <div class="card weather-card">
+              <h2>Időjárás</h2>
+              <form id="weatherForm" class="event-form">
+                <input id="zipCode" type="text" placeholder="Irányítószám vagy város" value="Budapest" required>
+                <button type="submit">Frissítés</button>
+              </form>
+              <div class="weather-preview" id="weatherPreview"></div>
+            </div>
+            <div class="card">
+              <h2>7 napos előrejelzés</h2>
+              <ul id="weatherList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="helper">
+          <div class="layout">
+            <div class="card">
+              <h2>Hearth-szerű családi segéd</h2>
+              <form id="helperForm" class="event-form">
+                <textarea id="helperText" placeholder="Példa: holnap 16:00 fociedzés Gyerek 1, péntek pizza vacsora, vegyél tejet" required></textarea>
+                <button type="submit">Feldolgozás jóváhagyással</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Jóváhagyási sor</h2>
+              <ul id="helperList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="profiles">
+          <div class="layout">
+            <div class="card">
+              <h2>Profilok</h2>
+              <form id="profileForm" class="event-form">
+                <input id="profileName" type="text" placeholder="Név" required>
+                <input id="profileColor" type="color" value="#ff8a5f">
+                <input id="profileAvatar" type="file" accept="image/*">
+                <input id="profileAllergy" type="text" placeholder="Allergia / fontos infó">
+                <input id="profileEmergency" type="text" placeholder="Vészhelyzeti kontakt">
+                <button type="submit">Profil hozzáadása</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Családtagok</h2>
+              <ul id="profileList" class="event-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="settings">
+          <div class="layout">
+            <div class="card">
+              <h2>Kijelző beállítások</h2>
+              <form id="settingsForm" class="event-form">
+                <input id="familyNameInput" type="text" placeholder="Család neve">
+                <input id="privacyWallpaperInput" type="file" accept="image/*">
+                <select id="frameSelect">
+                  <option value="wood">Világos fa keret</option>
+                  <option value="white">Matt fehér keret</option>
+                  <option value="black">Matt fekete keret</option>
+                </select>
+                <select id="themeSelect">
+                  <option value="warm">Meleg Hearth</option>
+                  <option value="light">Világos otthon</option>
+                  <option value="night">Éjszakai</option>
+                </select>
+                <label class="inline-check"><input id="bedtimeDim" type="checkbox"> Bedtime dimming</label>
+                <button type="submit">Mentés</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Hearth-szerű funkciók</h2>
+              <ul class="feature-grid">
+                <li>27 colos falikijelző arány</li>
+                <li>Privát mód</li>
+                <li>Color-coded családtagok</li>
+                <li>Rutin sorozat és csillagok</li>
+                <li>Menütervezés</li>
+                <li>Időjárás widget</li>
+                <li>Segéd jóváhagyási sor</li>
+                <li>Háttértár + SQLite szinkron</li>
+                <li>Profilképek és avatarok</li>
+                <li>Vidám modern családi felület</li>
+                <li>Google Naptár import</li>
+                <li>iCal URL import</li>
+                <li>Jutalom-kiváltó animáció</li>
+                <li>Privát háttérkép</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+        <button id="quickAddButton" class="quick-add-fab" type="button" aria-label="Gyors hozzáadás">+</button>
+        <div id="quickAddMenu" class="quick-add-menu" aria-hidden="true">
+          <button type="button" data-tab-target="calendar">Esemény</button>
+          <button type="button" data-tab-target="todos">Teendő</button>
+          <button type="button" data-tab-target="routines">Rutin</button>
+          <button type="button" data-tab-target="meals">Menü</button>
+        </div>
+        <div class="display-tools">
+          <button id="orientationToggle" class="ghost-btn icon-toggle" type="button" aria-label="Fekvő nézet">Fekvő nézet</button>
+          <button id="privacyToggle" class="ghost-btn icon-toggle" type="button">Privát mód</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <template id="eventItemTemplate">
+    <li class="event-item">
+      <div class="event-info">
+        <strong class="event-title"></strong>
+        <span class="event-datetime"></span>
+      </div>
+      <div class="item-actions">
+        <button class="delete-btn" type="button">Törlés</button>
+      </div>
+    </li>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>

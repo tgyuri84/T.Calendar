@@ -1,0 +1,13 @@
+{
+  "name": "hearth-display-home",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check script.js"
+  },
+  "dependencies": {
+    "googleapis": "latest"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "additionalDirectories": [
+    "/Users/uidw8768/Magán fejlesztés"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(node *)",
+      "Bash(node --check '/Users/uidw8768/Magán fejlesztés/script.js' 2>&1 || true)",
+      "Bash(node --check '/Users/uidw8768/Magán fejlesztés/script.js' 2>&1 || true)"
+    ]
+  }
+}
