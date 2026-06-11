@@ -1072,6 +1072,12 @@ function applyPrivacyMode() {
   nodes.privacyToggle.setAttribute('aria-label', privacyMode ? 'Privát mód kikapcsolása' : 'Privát mód bekapcsolása')
 }
 
+function setPrivacyMode(enabled) {
+  privacyMode = enabled
+  persistAll()
+  applyPrivacyMode()
+}
+
 function tickClock() {
   const now = new Date()
   nodes.clock.textContent = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -1137,6 +1143,12 @@ function wireEvents() {
       const btn = e.target.closest('[data-tab-target]')
       if (!btn) return
       activateTab(btn.dataset.tabTarget)
+    })
+    document.addEventListener('click', e => {
+      if (!nodes.quickAddMenu.classList.contains('open')) return
+      if (e.target.closest('#quickAddMenu') || e.target.closest('#quickAddButton')) return
+      nodes.quickAddMenu.classList.remove('open')
+      nodes.quickAddMenu.setAttribute('aria-hidden', 'true')
     })
   }
   nodes.profileRail.addEventListener('click', e => {
@@ -1205,9 +1217,22 @@ function wireEvents() {
     renderCalendar()
   })
   nodes.privacyToggle.addEventListener('click', () => {
-    privacyMode = !privacyMode
-    persistAll()
-    applyPrivacyMode()
+    setPrivacyMode(!privacyMode)
+  })
+  const display = document.querySelector('.display')
+  if (display) {
+    display.addEventListener('click', e => {
+      if (!privacyMode || e.target.closest('.display-tools')) return
+      setPrivacyMode(false)
+    })
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return
+    if (privacyMode) setPrivacyMode(false)
+    if (nodes.quickAddMenu) {
+      nodes.quickAddMenu.classList.remove('open')
+      nodes.quickAddMenu.setAttribute('aria-hidden', 'true')
+    }
   })
   nodes.eventForm.addEventListener('submit', e => {
     e.preventDefault()
