@@ -14,7 +14,9 @@ const corsOrigins = (process.env.CORS_ORIGIN || frontendUrl || '*')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean)
-const db = new DatabaseSync(path.join(__dirname, 'hearth.db'))
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'hearth.db')
+fs.mkdirSync(path.dirname(dbPath), { recursive: true })
+const db = new DatabaseSync(dbPath)
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',

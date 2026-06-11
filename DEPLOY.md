@@ -18,6 +18,7 @@ Szukseges kornyezeti valtozok:
 PORT=3000
 FRONTEND_URL=https://felhasznalonev.github.io/repo-nev
 CORS_ORIGIN=https://felhasznalonev.github.io
+DB_PATH=/var/data/hearth.db
 ```
 
 A backend URL peldaul ilyen lesz:
